@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Article Archive | Leapjuice Labs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a25;
+            --accent-cyan: #00f0ff;
+            --accent-magenta: #ff00aa;
+            --accent-purple: #a855f7;
+            --accent-green: #00ff88;
+            --text-primary: #e0e0e8;
+            --text-secondary: #8888a0;
+            --glow-cyan: 0 0 20px rgba(0, 240, 255, 0.5), 0 0 40px rgba(0, 240, 255, 0.3);
+            --glow-magenta: 0 0 20px rgba(255, 0, 170, 0.5), 0 0 40px rgba(255, 0, 170, 0.3);
+            --glow-purple: 0 0 20px rgba(168, 85, 247, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated background */
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            filter: blur(150px);
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-glow-1 {
+            top: -200px;
+            left: -200px;
+            background: var(--accent-cyan);
+            animation: floatGlow 20s ease-in-out infinite;
+        }
+
+        .bg-glow-2 {
+            bottom: -200px;
+            right: -200px;
+            background: var(--accent-magenta);
+            animation: floatGlow 25s ease-in-out infinite reverse;
+        }
+
+        @keyframes floatGlow {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(100px, 50px); }
+        }
+
+        /* Scanlines */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 0, 0, 0.1) 2px,
+                rgba(0, 0, 0, 0.1) 4px
+            );
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0.3;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            letter-spacing: 4px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: var(--glow-cyan);
+            animation: glitch 3s infinite;
+            position: relative;
+        }
+
+        .logo::before,
+        .logo::after {
+            content: 'LEAPJUICE LABS';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            opacity: 0.5;
+        }
+
+        .logo::before {
+            animation: glitchLeft 2s infinite;
+            clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%);
+        }
+
+        .logo::after {
+            animation: glitchRight 2s infinite;
+            clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
+        }
+
+        @keyframes glitch {
+            0%, 90%, 100% { opacity: 1; }
+            92% { opacity: 0.8; transform: translate(-2px, 1px); }
+            94% { opacity: 1; transform: translate(2px, -1px); }
+            96% { opacity: 0.9; transform: translate(0, 2px); }
+        }
+
+        @keyframes glitchLeft {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-3px, 0); }
+            40% { transform: translate(3px, 0); }
+            60% { transform: translate(-2px, 0); }
+            80% { transform: translate(2px, 0); }
+        }
+
+        @keyframes glitchRight {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(3px, 0); }
+            40% { transform: translate(-3px, 0); }
+            60% { transform: translate(2px, 0); }
+            80% { transform: translate(-2px, 0); }
+        }
+
+        .tagline {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            margin-top: 10px;
+        }
+
+        /* Archive Input Section */
+        .archive-section {
+            background: var(--bg-secondary);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            border-radius: 8px;
+            padding: 40px;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .archive-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), var(--accent-magenta), transparent);
+        }
+
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            color: var(--accent-cyan);
+            letter-spacing: 3px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section-title::before {
+            content: '//';
+            color: var(--accent-magenta);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .url-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 18px 25px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 500;
+            background: var(--bg-primary);
+            border: 2px solid rgba(0, 240, 255, 0.3);
+            border-radius: 4px;
+            color: var(--text-primary);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .url-input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: var(--glow-cyan), inset 0 0 20px rgba(0, 240, 255, 0.1);
+        }
+
+        .url-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .archive-btn {
+            padding: 18px 40px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            border: none;
+            border-radius: 4px;
+            color: var(--bg-primary);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .archive-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .archive-btn:hover::before {
+            left: 100%;
+        }
+
+        .archive-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--glow-cyan);
+        }
+
+        .archive-btn:active {
+            transform: translateY(0);
+        }
+
+        .archive-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Loading State */
+        .loading-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 10, 15, 0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .loader-ring {
+            width: 60px;
+            height: 60px;
+            border: 3px solid var(--bg-tertiary);
+            border-top-color: var(--accent-cyan);
+            border-right-color: var(--accent-magenta);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loader-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 3px;
+            color: var(--accent-cyan);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Error Message */
+        .error-message {
+            display: none;
+            margin-top: 20px;
+            padding: 15px 20px;
+            background: rgba(255, 0, 100, 0.1);
+            border: 1px solid rgba(255, 0, 100, 0.3);
+            border-radius: 4px;
+            color: #ff6688;
+            font-size: 0.95rem;
+        }
+
+        .error-message.active {
+            display: block;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+
+        /* Article Display */
+        .article-display {
+            display: none;
+            background: var(--bg-secondary);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 8px;
+            overflow: hidden;
+            animation: slideUp 0.5s ease;
+        }
+
+        .article-display.active {
+            display: block;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .article-header {
+            padding: 30px 40px;
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(0, 240, 255, 0.1));
+            border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+            position: relative;
+        }
+
+        .article-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-purple), var(--accent-cyan), transparent);
+        }
+
+        .article-headline {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            line-height: 1.3;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+
+        .article-meta {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .meta-icon {
+            color: var(--accent-purple);
+        }
+
+        .cached-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 20px;
+            color: var(--accent-green);
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .article-body {
+            padding: 40px;
+            font-size: 1.15rem;
+            line-height: 1.8;
+            color: var(--text-primary);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .article-body p {
+            margin-bottom: 1.5em;
+            text-align: justify;
+        }
+
+        .article-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Scrollbar */
+        .article-body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .article-body::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        .article-body::-webkit-scrollbar-thumb {
+            background: var(--accent-purple);
+            border-radius: 4px;
+        }
+
+        .article-body::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-cyan);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 20px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: blink 2s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .logo {
+                font-size: 1.8rem;
+                letter-spacing: 2px;
+            }
+
+            .archive-section {
+                padding: 25px;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            .archive-btn {
+                width: 100%;
+            }
+
+            .article-headline {
+                font-size: 1.4rem;
+            }
+
+            .article-body {
+                padding: 25px;
+                font-size: 1.05rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    <div class="scanlines"></div>
+
+    <div class="container">
+        <header>
+            <h1 class="logo">LEAPJUICE LABS</h1>
+            <p class="tagline">Article Archive</p>
+        </header>
+
+        <section class="archive-section">
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="loader">
+                    <div class="loader-ring"></div>
+                    <span class="loader-text">ARCHIVING ARTICLE</span>
+                </div>
+            </div>
+
+            <h2 class="section-title">NEW ARCHIVE</h2>
+
+            <div class="input-group">
+                <input
+                    type="url"
+                    class="url-input"
+                    id="urlInput"
+                    placeholder="Paste article URL here..."
+                    required
+                >
+                <button class="archive-btn" id="archiveBtn">ARCHIVE</button>
+            </div>
+
+            <div class="error-message" id="errorMessage"></div>
+        </section>
+
+        <article class="article-display" id="articleDisplay">
+            <div class="article-header">
+                <h2 class="article-headline" id="articleHeadline"></h2>
+                <div class="article-meta">
+                    <span class="meta-item">
+                        <span class="meta-icon">&#9679;</span>
+                        <span id="articleUrl"></span>
+                    </span>
+                    <span class="meta-item">
+                        <span class="meta-icon">&#9679;</span>
+                        <span id="articleDate"></span>
+                    </span>
+                    <span class="cached-badge" id="cachedBadge" style="display: none;">
+                        &#10003; CACHED
+                    </span>
+                </div>
+            </div>
+            <div class="article-body" id="articleBody"></div>
+        </article>
+
+        <footer>
+            <div class="status-indicator">
+                <span class="status-dot"></span>
+                <span>SYSTEM ONLINE</span>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const urlInput = document.getElementById('urlInput');
+        const archiveBtn = document.getElementById('archiveBtn');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const errorMessage = document.getElementById('errorMessage');
+        const articleDisplay = document.getElementById('articleDisplay');
+        const articleHeadline = document.getElementById('articleHeadline');
+        const articleUrl = document.getElementById('articleUrl');
+        const articleDate = document.getElementById('articleDate');
+        const articleBody = document.getElementById('articleBody');
+        const cachedBadge = document.getElementById('cachedBadge');
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('active');
+            setTimeout(() => {
+                errorMessage.classList.remove('active');
+            }, 5000);
+        }
+
+        function hideError() {
+            errorMessage.classList.remove('active');
+        }
+
+        function displayArticle(data) {
+            articleHeadline.textContent = data.headline;
+            articleUrl.textContent = data.url.length > 50 ? data.url.substring(0, 50) + '...' : data.url;
+            articleDate.textContent = new Date(data.archived_at).toLocaleString();
+
+            // Convert newlines to paragraphs
+            const paragraphs = data.article_text.split('\n\n');
+            articleBody.innerHTML = paragraphs.map(p => `<p>${escapeHtml(p)}</p>`).join('');
+
+            // Show cached badge if applicable
+            cachedBadge.style.display = data.cached ? 'inline-flex' : 'none';
+
+            articleDisplay.classList.add('active');
+
+            // Scroll to article
+            articleDisplay.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function archiveArticle() {
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                showError('Please enter a URL');
+                return;
+            }
+
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                showError('Invalid URL. Must start with http:// or https://');
+                return;
+            }
+
+            hideError();
+            loadingOverlay.classList.add('active');
+            archiveBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/archive', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to archive article');
+                }
+
+                displayArticle(data);
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                loadingOverlay.classList.remove('active');
+                archiveBtn.disabled = false;
+            }
+        }
+
+        // Event listeners
+        archiveBtn.addEventListener('click', archiveArticle);
+
+        urlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                archiveArticle();
+            }
+        });
+
+        // Auto-focus input
+        urlInput.focus();
+    </script>
+</body>
+</html>
