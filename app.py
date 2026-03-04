@@ -37,25 +37,68 @@ def scrape_article(url):
     Scrape article headline and text from a URL using Playwright.
     Returns (headline, article_text) or raises an exception.
     """
+    # Try textise dot iitty as fallback for paywalled sites
+    if 'wsj.com' in url or 'nytimes.com' in url or 'bloomberg.com' in url:
+        try:
+            textise_url = f"https://r.jina.ai/{url}"
+            import urllib.request
+            req = urllib.request.Request(textise_url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=15) as response:
+                content = response.read().decode('utf-8')
+                if content and len(content) > 100:
+                    # Extract title and content from jina.ai format
+                    lines = content.split('\n')
+                    headline = ''
+                    article_text = ''
+                    for i, line in enumerate(lines):
+                        if line.startswith('# '):
+                            headline = line[2:].strip()
+                        elif headline and line.strip():
+                            article_text += line.strip() + '\n\n'
+                    if headline and article_text.strip():
+                        return headline.strip(), article_text.strip()
+        except Exception as e:
+            pass  # Fall back to Playwright
+
     with sync_playwright() as p:
         browser = p.chromium.launch(
             headless=True,
-            args=['--no-sandbox', '--disable-setuid-sandbox']
+            args=[
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-blink-features=AutomationControlled',
+                '--disable-dev-shm-usage',
+            ]
         )
-        page = browser.new_page()
+        context = browser.new_context(
+            user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            viewport={'width': 1920, 'height': 1080}
+        )
+        page = context.new_page()
 
         try:
-            # Set realistic viewport
-            page.set_viewport_size({"width": 1920, "height": 1080})
+            # Add stealth detection bypass
+            page.add_init_script("""
+                Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+                Object.defineProperty(navigator, 'plugins', {get: () => [1, 2, 3, 4, 5]});
+                Object.defineProperty(navigator, 'languages', {get: () => ['en-US', 'en']});
+            """)
 
-            # Navigate with timeout
+            # Navigate with timeout - use domcontentloaded for faster, more reliable loading
             response = page.goto(url, timeout=30000, wait_until="domcontentloaded")
 
             if response is None:
                 raise ValueError("Could not load page")
 
-            # Wait a bit for dynamic content
-            page.wait_for_timeout(2000)
+            # Wait for content to load - more reliable than networkidle
+            page.wait_for_timeout(3000)
+
+            # Try to scroll to trigger lazy-loaded content
+            try:
+                page.evaluate("window.scrollTo(0, document.body.scrollHeight / 2)")
+                page.wait_for_timeout(1000)
+            except:
+                pass
 
             # Try to find headline
             headline = None
