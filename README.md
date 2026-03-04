@@ -1,10 +1,10 @@
 # Article Archive
 
-A self-contained Docker container that scrapes and archives articles from any URL.
+A self-contained Docker container that scrapes and archives articles from any URL using a headless browser (Playwright).
 
 ## What it does
 
-1. **Scrapes articles** - Paste any URL and it extracts the headline + article text
+1. **Scrapes articles** - Paste any URL and it extracts the headline + article text using a real headless browser
 2. **Stores in SQLite** - Articles are saved to a local database
 3. **Deduplicates** - Same URL returns the cached version instead of re-scraping
 4. **Serves a beautiful UI** - Cyberpunk-themed interface matching Leapjuice Labs branding
@@ -47,6 +47,7 @@ curl -X POST http://localhost:8080/api/archive \
 ## Technical details
 
 - **Backend:** Python Flask
+- **Scraper:** Playwright (headless Chromium browser)
 - **Database:** SQLite (stored in `/app/data`)
 - **Port:** 8080 (internal), maps to 80 (host)
 - **No external dependencies** - completely self-contained
