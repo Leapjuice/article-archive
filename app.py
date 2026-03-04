@@ -140,7 +140,11 @@ def scrape_article(url):
 
             # Try common article class names
             if not article_text:
-                class_names = ['article-content', 'article-body', 'post-content', 'entry-content', 'content', 'story-body']
+                class_names = [
+                    'article-content', 'article-body', 'post-content', 'entry-content',
+                    'content', 'story-body', 'articleBody', 'paywall-article',
+                    'wsj-snippet-body', 'snippet-body', 'article__body'
+                ]
                 for class_name in class_names:
                     try:
                         elem = page.query_selector(f'.{class_name}')
@@ -156,6 +160,24 @@ def scrape_article(url):
                                 break
                     except:
                         continue
+
+            # Try article[role="article"] or specific article containers
+            if not article_text:
+                try:
+                    for sel in ['article[role="main"]', 'div[itemprop="articleBody"]', '[data-testid="article-body"]']:
+                        elem = page.query_selector(sel)
+                        if elem:
+                            paragraphs = elem.query_selector_all('p')
+                            texts = []
+                            for p in paragraphs:
+                                text = p.inner_text()
+                                if text and len(text.strip()) > 20:
+                                    texts.append(text.strip())
+                            if texts:
+                                article_text = '\n\n'.join(texts)
+                                break
+                except:
+                    pass
 
             # Last resort: get all paragraphs
             if not article_text:
@@ -278,6 +300,33 @@ def get_article(url_hash):
         'headline': article[2],
         'article_text': article[3],
         'archived_at': article[4]
+    })
+
+
+@app.route('/api/articles', methods=['GET'])
+def get_all_articles():
+    """Retrieve all archived articles."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute(
+        'SELECT id, url, url_hash, headline, article_text, archived_at FROM articles ORDER BY archived_at DESC'
+    )
+    articles = cursor.fetchall()
+    conn.close()
+
+    return jsonify({
+        'articles': [
+            {
+                'id': a[0],
+                'url': a[1],
+                'url_hash': a[2],
+                'headline': a[3],
+                'article_text': a[4],
+                'archived_at': a[5]
+            }
+            for a in articles
+        ]
     })
 
 
