@@ -1,12 +1,14 @@
 FROM python:3.12-slim
 
-# Install system dependencies for Playwright
+# Install system dependencies for Playwright browser
 RUN apt-get update && apt-get install -y \
     gcc \
     ca-certificates \
     curl \
     gnupg \
     fonts-unifont \
+    libnss3 \
+    libnspr4 \
     libatk1.0-0 \
     libatk-bridge2.0-0 \
     libcups2 \
@@ -22,6 +24,12 @@ RUN apt-get update && apt-get install -y \
     libcairo2 \
     libasound2 \
     libatspi2.0-0 \
+    libpangocairo-1.0-0 \
+    libgtk-3-0 \
+    libglib2.0-0 \
+    libevent-2.1-7 \
+    libxtst6 \
+    libxcursor1 \
     && rm -rf /var/lib/apt/lists/* \
     && update-ca-certificates
 

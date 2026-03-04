@@ -4,17 +4,13 @@ import hashlib
 import asyncio
 from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory
-from playwright.async_api import async_playwright
+from playwright.sync_api import sync_playwright
 
 app = Flask(__name__)
 
 # Database configuration
 DB_PATH = os.path.join(os.path.dirname(__file__), 'data', 'archive.db')
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
-
-# Global playwright instance
-playwright_instance = None
-browser_instance = None
 
 
 def init_db():
@@ -36,158 +32,151 @@ def init_db():
     conn.close()
 
 
-async def get_browser():
-    """Get or create browser instance."""
-    global playwright_instance, browser_instance
-    if browser_instance is None or not browser_instance.is_connected():
-        playwright_instance = await async_playwright().start()
-        browser_instance = await playwright_instance.chromium.launch(
-            headless=True,
-            args=['--no-sandbox', '--disable-setuid-sandbox']
-        )
-    return browser_instance
-
-
-async def scrape_article(url):
+def scrape_article(url):
     """
     Scrape article headline and text from a URL using Playwright.
     Returns (headline, article_text) or raises an exception.
     """
-    browser = await get_browser()
-    page = await browser.new_page()
+    with sync_playwright() as p:
+        browser = p.chromium.launch(
+            headless=True,
+            args=['--no-sandbox', '--disable-setuid-sandbox']
+        )
+        page = browser.new_page()
 
-    try:
-        # Set realistic viewport
-        await page.set_viewport_size({"width": 1920, "height": 1080})
-
-        # Navigate with timeout
-        response = await page.goto(url, timeout=30000, wait_until="domcontentloaded")
-
-        if response is None:
-            raise ValueError("Could not load page")
-
-        # Wait a bit for dynamic content
-        await page.wait_for_timeout(2000)
-
-        # Try to find headline
-        headline = None
-
-        # Try Open Graph title
-        og_title = await page.get_attribute('meta[property="og:title"]', 'content')
-        if og_title:
-            headline = og_title
-
-        # Try Twitter title
-        if not headline:
-            twitter_title = await page.get_attribute('meta[name="twitter:title"]', 'content')
-            if twitter_title:
-                headline = twitter_title
-
-        # Try article h1
-        if not headline:
-            try:
-                article_elem = await page.query_selector('article')
-                if article_elem:
-                    h1 = await article_elem.query_selector('h1')
-                    if h1:
-                        headline = await h1.inner_text()
-            except:
-                pass
-
-        # Try h1 tag
-        if not headline:
-            try:
-                h1 = await page.query_selector('h1')
-                if h1:
-                    headline = await h1.inner_text()
-            except:
-                pass
-
-        # Fall back to title tag
-        if not headline:
-            title = await page.title()
-            if title:
-                headline = title
-
-        if not headline:
-            raise ValueError("Could not extract headline from article")
-
-        # Try to find article text
-        article_text = ""
-
-        # Try article tag
         try:
-            article_elem = await page.query_selector('article')
-            if article_elem:
-                paragraphs = await article_elem.query_selector_all('p')
-                texts = []
-                for p in paragraphs:
-                    text = await p.inner_text()
-                    if text and len(text.strip()) > 20:  # Filter short texts
-                        texts.append(text.strip())
-                article_text = '\n\n'.join(texts)
-        except:
-            pass
+            # Set realistic viewport
+            page.set_viewport_size({"width": 1920, "height": 1080})
 
-        # Try main tag
-        if not article_text:
+            # Navigate with timeout
+            response = page.goto(url, timeout=30000, wait_until="domcontentloaded")
+
+            if response is None:
+                raise ValueError("Could not load page")
+
+            # Wait a bit for dynamic content
+            page.wait_for_timeout(2000)
+
+            # Try to find headline
+            headline = None
+
+            # Try Open Graph title
             try:
-                main_elem = await page.query_selector('main')
-                if main_elem:
-                    paragraphs = await main_elem.query_selector_all('p')
+                og_title = page.get_attribute('meta[property="og:title"]', 'content', timeout=5000)
+                if og_title:
+                    headline = og_title
+            except:
+                pass
+
+            # Try Twitter title
+            if not headline:
+                try:
+                    twitter_title = page.get_attribute('meta[name="twitter:title"]', 'content', timeout=5000)
+                    if twitter_title:
+                        headline = twitter_title
+                except:
+                    pass
+
+            # Try article h1
+            if not headline:
+                try:
+                    article_elem = page.query_selector('article')
+                    if article_elem:
+                        h1 = article_elem.query_selector('h1')
+                        if h1:
+                            headline = h1.inner_text()
+                except:
+                    pass
+
+            # Try h1 tag
+            if not headline:
+                try:
+                    h1 = page.query_selector('h1')
+                    if h1:
+                        headline = h1.inner_text()
+                except:
+                    pass
+
+            # Fall back to title tag
+            if not headline:
+                title = page.title()
+                if title:
+                    headline = title
+
+            if not headline:
+                raise ValueError("Could not extract headline from article")
+
+            # Try to find article text
+            article_text = ""
+
+            # Try article tag
+            try:
+                article_elem = page.query_selector('article')
+                if article_elem:
+                    paragraphs = article_elem.query_selector_all('p')
                     texts = []
                     for p in paragraphs:
-                        text = await p.inner_text()
-                        if text and len(text.strip()) > 20:
+                        text = p.inner_text()
+                        if text and len(text.strip()) > 20:  # Filter short texts
                             texts.append(text.strip())
                     article_text = '\n\n'.join(texts)
             except:
                 pass
 
-        # Try common article class names
-        if not article_text:
-            class_names = ['article-content', 'article-body', 'post-content', 'entry-content', 'content', 'story-body']
-            for class_name in class_names:
+            # Try main tag
+            if not article_text:
                 try:
-                    elem = await page.query_selector(f'.{class_name}')
-                    if elem:
-                        paragraphs = await elem.query_selector_all('p')
+                    main_elem = page.query_selector('main')
+                    if main_elem:
+                        paragraphs = main_elem.query_selector_all('p')
                         texts = []
                         for p in paragraphs:
-                            text = await p.inner_text()
+                            text = p.inner_text()
                             if text and len(text.strip()) > 20:
                                 texts.append(text.strip())
-                        if texts:
-                            article_text = '\n\n'.join(texts)
-                            break
+                        article_text = '\n\n'.join(texts)
                 except:
-                    continue
+                    pass
 
-        # Last resort: get all paragraphs
-        if not article_text:
-            try:
-                paragraphs = await page.query_selector_all('p')
-                texts = []
-                for p in paragraphs:
-                    text = await p.inner_text()
-                    if text and len(text.strip()) > 20:
-                        texts.append(text.strip())
-                article_text = '\n\n'.join(texts)
-            except:
-                pass
+            # Try common article class names
+            if not article_text:
+                class_names = ['article-content', 'article-body', 'post-content', 'entry-content', 'content', 'story-body']
+                for class_name in class_names:
+                    try:
+                        elem = page.query_selector(f'.{class_name}')
+                        if elem:
+                            paragraphs = elem.query_selector_all('p')
+                            texts = []
+                            for p in paragraphs:
+                                text = p.inner_text()
+                                if text and len(text.strip()) > 20:
+                                    texts.append(text.strip())
+                            if texts:
+                                article_text = '\n\n'.join(texts)
+                                break
+                    except:
+                        continue
 
-        if not article_text:
-            raise ValueError("Could not extract article text from page")
+            # Last resort: get all paragraphs
+            if not article_text:
+                try:
+                    paragraphs = page.query_selector_all('p')
+                    texts = []
+                    for p in paragraphs:
+                        text = p.inner_text()
+                        if text and len(text.strip()) > 20:
+                            texts.append(text.strip())
+                    article_text = '\n\n'.join(texts)
+                except:
+                    pass
 
-        return headline.strip(), article_text.strip()
+            if not article_text:
+                raise ValueError("Could not extract article text from page")
 
-    finally:
-        await page.close()
+            return headline.strip(), article_text.strip()
 
-
-def scrape_article_sync(url):
-    """Synchronous wrapper for scrape_article."""
-    return asyncio.run(scrape_article(url))
+        finally:
+            browser.close()
 
 
 @app.route('/')
@@ -237,7 +226,7 @@ def archive_article():
 
     # Scrape the article
     try:
-        headline, article_text = scrape_article_sync(url)
+        headline, article_text = scrape_article(url)
     except Exception as e:
         conn.close()
         return jsonify({'error': f'Failed to scrape article: {str(e)}'}), 500
@@ -290,16 +279,6 @@ def get_article(url_hash):
         'article_text': article[3],
         'archived_at': article[4]
     })
-
-
-@app.teardown_appcontext
-async def cleanup(exception=None):
-    """Cleanup browser on shutdown."""
-    global browser_instance, playwright_instance
-    if browser_instance:
-        await browser_instance.close()
-    if playwright_instance:
-        await playwright_instance.stop()
 
 
 if __name__ == '__main__':
